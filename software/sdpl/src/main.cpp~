@@ -1,6 +1,0 @@
-#include <libavcode/avcodec.h>
-
-int main()
-{
-    return 0;
-}
