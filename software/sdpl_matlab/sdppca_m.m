@@ -1,21 +1,23 @@
-function [model] = sdppca(X, V, E, M, ETA, ETA_update_type, THRESH, model_init, iter_obj)
-% SDPPCA        
-% Structured Distributed Probablistic PCA (SD-PPCA)
+function [model] = sdppca_m(X, MissIDX, V, E, M, ETA, ETA_update_type, THRESH, model_init, iter_obj)
+% SDPPCA_M      
+% Structured Distributed Probablistic PCA (SD-PPCA) with Missing Values
 % 
 % Description
-%  Solve probabilistic PCA problem in a distributed way with a structured network.
-%  The network has max(V) nodes. 
-%  We assume the network is fully connected with weighted bi-direction. 
-%  This function only simulates parameter broadcasts. 
-%  Local computation is done by dppca_local function.
+%  Solve probabilistic PCA problem in a distributed way, allowing missing
+% values to be specified in a matrix same size of input X. The network has 
+% max(V) nodes. We assume the network is connected. This function only 
+% simulates parameter broadcasts. Just like SD-PPCA, local computation is
+% done by sdppca_m_local function.
 %
+% Input
 % X        : D x N matrix for full data from all nodes (N=N1+N2+...+NJ)
+% MissIDX  : D x N matrix indicating a feature is missing (0) or not (1)
 % V        : N x 1 vector for each observation's source (node affiliation)
 % E        : J x J adjacency matrix where J = max(V)
 % M        : 1 x 1 scalar of projection dimension
 % ETA      : 1 x 1 scalar of learning rate
 % ETA_update_type
-           : ETA Updating Type
+%          : ETA Updating Type
 % THRESH   : 1 x 1 scalar convergence criterion (Default 10^-5)
 % iter_obj : If > 0, print out objective value every (iter_obj) iteration
 %            (Default 10)
@@ -34,7 +36,8 @@ function [model] = sdppca(X, V, E, M, ETA, ETA_update_type, THRESH, model_init, 
 %
 % Implemented/Modified from [1]
 %  by     Changkyu Song (changkyu.song@cs.rutgers.edu)
-%  on     2014.11.07 (last modified on 2014.11.07)
+%  on     2014.11.07 (last modified on 2014/11/07)
+
 %
 % References
 %  [1] S. Yoon and V. Pavlovic. Distributed Probabilistic Learning
@@ -46,13 +49,12 @@ function [model] = sdppca(X, V, E, M, ETA, ETA_update_type, THRESH, model_init, 
 % using wireless sensor networks, IEEE J. Selected Topics in Signal 
 % Processing 5(4), August 2011.
 
-
-COUNTER_MAX = 10000;
+COUNTER_MAX =10000;
 
 % Set default convergence criterion
-if nargin < 6
+if nargin < 7
     THRESH = 10^(-5);
-elseif nargin < 5
+elseif nargin < 6
     iter_obj = 10;
 end
 
@@ -86,6 +88,12 @@ for idx = 1 : J
     Xi{idx} = X(:, V == idx);
 end
 
+% Build MissIDXi for faster computation
+MissIDXi = cell(J,1);
+for idx = 1 : J
+    MissIDXi{idx} = MissIDX(:, V == idx);
+end
+
 % Local parameters and auxiliary variables defined here for simplicity.
 % In the real environment, these variables reside in each local sensor.
 % Initialize parameters and Lagrange multipliers
@@ -94,7 +102,7 @@ if nargin<7
     MUi = rand(D, J);
     PRECi = repmat(1./rand(1), [J, 1]);
 else
-    % You can further perturb initializations here if you want
+    % You can further perturb initializations here if you want    
     Wi = zeros(D, M, J);
     for idj = 1 : J
         Wi(:,:,idj) = model_init.W(:,:,idj) ;%+ rand(D, M)/1000;
@@ -125,7 +133,6 @@ tic;
 
 %% Main loop
 while counter <= COUNTER_MAX
-    
     %% --------------------------------------------------------------------
     % Temporarily store parameters to simulate broadcasting and
     % synchronization. All nodes should update before propagating their 
@@ -144,7 +151,7 @@ while counter <= COUNTER_MAX
     for idx = 1 : J
         % Update (Eq. 7, 8, 9, 13)
         [Wnew, MUnew, PRECnew, EZn, EZnZnt] = ...
-            sdppca_local(Xi{idx}, M, idx, Bj{idx}, ETAij(idx,:), ...
+            sdppca_m_local(Xi{idx}, MissIDXi{idx}, M, idx, Bj{idx}, ETAij(idx,:), ...
                 Wi_old, MUi_old, PRECi_old, LAMBDAi, GAMMAi, BETAi);
         
         % Assign updated parameters and latent statistics with new values
@@ -157,13 +164,13 @@ while counter <= COUNTER_MAX
         %Fi(idx) = Fnew;
         % [NEW]
         for jdx = 1 : J
-            Fpn(idx,jdx) = computeObj_local( Xi{jdx}, M, Wnew, PRECnew );
+            Fpn(idx,jdx) = computeObj_m_local( Xi{jdx}, MissIDX, Wnew, MUnew, PRECnew, EZ{idx}, EZZt{idx} );
             if idx==jdx
                 Fi(idx) = Fpn(idx,jdx);
             end
         end
     end
-        
+    
     %% --------------------------------------------------------------------
     % Broadcast updated parameters to neighbors.
     % This is automatically done as we are passing variables directly.
@@ -207,7 +214,7 @@ while counter <= COUNTER_MAX
     oldObjLR = objLR;
     
     % Show progress if requested
-    if nargin >= 9 && iter_obj > 0 && mod(counter, iter_obj) == 0
+    if nargin >= 10 && iter_obj > 0 && mod(counter, iter_obj) == 0
         fprintf('Iter = %d:  Cost = %f (rel %3.2f%%) (J = %d, ETA = %f)\n', ...
             counter, objLR, relErr*100, J, ETA);
     end
@@ -215,16 +222,14 @@ while counter <= COUNTER_MAX
     % Check whether it has converged
     if abs(relErr) < THRESH
         converged = 1;
-        break;    
+        break;
     end
 
     % Increase counter
     counter = counter + 1;
 end
 
-%% Finialize optimization
-
-% Check convergence
+%% Check convergence
 if converged ~= 1
     fprintf('Could not converge within %d iterations.\n', COUNTER_MAX);
 end
@@ -260,6 +265,5 @@ VAR = 1./PRECi;
 % Create structure
 model = structure(W, MU, VAR, EZ, EZZt, eITER, eTIME, objArray, ...
     LAMBDAi, GAMMAi, BETAi);
-
 
 end

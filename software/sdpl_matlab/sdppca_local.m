@@ -3,7 +3,7 @@ function [W_new, MU_new, PREC_new, EZn, EZnZnt] = sdppca_local(...
 % DPPCA_LOCAL  Distributed Probablistic PCA (D-PPCA) Local Node
 % 
 % Description
-%  model = dppca_local(.) solves local optimization problem using iteration 
+%  model = sdppca_local(.) solves local optimization problem using iteration 
 % forumla and return consensus-enforced parameters so that they can be 
 % broadcasted to neighbors. For simpler implementation, this function can 
 % access all parameters in the network although they are only using the
@@ -25,9 +25,9 @@ function [W_new, MU_new, PREC_new, EZn, EZnZnt] = sdppca_local(...
 % EZZt_new : M x M x N cube containing covariances of latent space
 %~F_new    : 1 x 1 scalar computed optimization forumla (first term only)
 %
-% Modified from dppca_local.m of [1]
-%  by     Sejong Yoon (sjyoon@cs.rutgers.edu)
-%  on     2011.10.07 (last modified on 2012/02/01)
+% Implemented/Modified from [1]
+%  by     Changkyu Song (changkyu.song@cs.rutgers.edu)
+%  on     2014.11.07 (last modified on 2014/11/07)
 %
 % References
 %  [1] S. Yoon and V. Pavlovic. Distributed Probabilistic Learning

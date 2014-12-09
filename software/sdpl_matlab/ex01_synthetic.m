@@ -12,11 +12,12 @@ env_setting;
 
 %% Experiments Description
 models_desc = { 
-                struct('name','cppca', 'type','SVD',      'fn',@cppca   ,'skip',1), ...
-                struct('name','cppca', 'type','EM',       'fn',@cppca_em,'skip',1), ...
-                struct('name','dppca', 'type','',         'fn',@dppca   ,'skip',1), ...
-                struct('name','sdppca','type','bounded',  'fn',@sdppca  ,'skip',0), ...
-                struct('name','sdppca','type','unbounded','fn',@sdppca  ,'skip',0), ...
+                struct('name','cppca', 'type','SVD',   'fn',@cppca   ,'skip',1), ...
+                struct('name','cppca', 'type','EM',    'fn',@cppca_em,'skip',1), ...
+                struct('name','dppca', 'type','',      'fn',@dppca   ,'skip',1), ...
+                struct('name','sdppca','type','bd75',  'fn',@sdppca  ,'skip',0), ...
+                struct('name','sdppca','type','bd50',  'fn',@sdppca  ,'skip',0), ...
+                struct('name','sdppca','type','unbd',  'fn',@sdppca  ,'skip',0), ...
               };
           
 n_models = numel(models_desc);
@@ -105,10 +106,12 @@ end
 disp('*** Distributed Setting ***');
 
 % V: Node assignment of samples
-Varr = {1, 2, 5, 8, 10};
+%Varr = {1, 2, 5, 8, 10};
+Varr = {1, 2, 5, 8, 20, 50};
 
 % ETA: Learning rate
-ETAarr = {8, 10, 12, 16};
+%ETAarr = {8, 10, 12, 16};
+ETAarr = {10};
 
 % Various number of nodes, network topology and ETA
 % NOTE: We used parallel computation toolbox of MATLAB here but one can
@@ -133,6 +136,13 @@ for idk = 1:length(Varr)
             for idx_model = idxes_model_dm
 
                 model_desc = models_desc{idx_model};
+                if( strcmp(model_desc.name,'sdppca') )
+                    if( idx ~= 2 )
+                        % SDPPCA starts with fully connected graph
+                        continue;
+                    end
+                end
+                
                 disp(['PPCA ('  model_desc.name ' ' model_desc.type ')']);
 
                 % result directory
@@ -151,7 +161,12 @@ for idk = 1:length(Varr)
     
                 if( model_desc.skip )
                     if( exist( path_result, 'file' ) )
+                        model = load(path_result);
+                        model = model.model;
+                        
                         disp('already exist... skip');
+                        fprintf('Iter = %d:  Cost = %f\n', model.eITER, model.objArray(end,end));
+                
                         continue;
                     end
                 end
@@ -166,12 +181,10 @@ for idk = 1:length(Varr)
                 
                 fprintf('Iter = %d:  Cost = %f\n', model.eITER, model.objArray(end,end));
                 save_parfor_model(path_result, model);
-            end            
+            end
         end
     end
 end
 
-%% Show Result
-
-%            show_result_1_synth_sdppca( savepath{:} );
-
+% Show Result
+%show_result_1_synth_sdppca( savepath{:} );
