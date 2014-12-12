@@ -15,7 +15,7 @@ function [model] = sdppca(X, V, E, M, ETA, ETA_update_type, THRESH, model_init, 
 % M        : 1 x 1 scalar of projection dimension
 % ETA      : 1 x 1 scalar of learning rate
 % ETA_update_type
-           : ETA Updating Type
+%          : ETA Updating Type
 % THRESH   : 1 x 1 scalar convergence criterion (Default 10^-5)
 % iter_obj : If > 0, print out objective value every (iter_obj) iteration
 %            (Default 10)
@@ -113,6 +113,7 @@ objArray = zeros(COUNTER_MAX, J+1); % last one is for total
 Fi = ones(J, 1);
 Fpn = ones(J, J); % row: param col: node
 ETAij = repmat(ETA,J,J);
+ETAij_history = zeros(COUNTER_MAX,J,J);
 
 % Initialize latent variables (for loop implementation)
 EZ = cell(J, 1);
@@ -137,6 +138,8 @@ while counter <= COUNTER_MAX
     
     ETAij = sdppca_update_ETA(repmat(ETA,J,J),Fpn,ETA_update_type);
     %ETAij = sdppca_update_ETA(ETAij,Fpn,ETA_update_type);
+    ETAij_history(counter,:,:) = ETAij;
+    
     ETAijhalf = ETAij .* 0.5;
     
     %% --------------------------------------------------------------------
@@ -257,9 +260,12 @@ W = Wi;
 MU = MUi;
 VAR = 1./PRECi;
 
+% shrink ETA information
+ETAij_history = ETAij_history(1:eITER,:,:);
+
 % Create structure
 model = structure(W, MU, VAR, EZ, EZZt, eITER, eTIME, objArray, ...
-    LAMBDAi, GAMMAi, BETAi);
+    LAMBDAi, GAMMAi, BETAi, ETAij_history);
 
 
 end

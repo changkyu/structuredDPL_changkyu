@@ -121,6 +121,7 @@ objArray = zeros(COUNTER_MAX, J+1); % last one is for total
 Fi = ones(J, 1);
 Fpn = ones(J, J); % row: param col: node
 ETAij = repmat(ETA,J,J);
+ETAij_history = zeros(COUNTER_MAX,J,J);
 
 % Initialize latent variables (for loop implementation)
 EZ = cell(J, 1);
@@ -144,6 +145,7 @@ while counter <= COUNTER_MAX
     
     ETAij = sdppca_update_ETA(repmat(ETA,J,J),Fpn,ETA_update_type);
     %ETAij = sdppca_update_ETA(ETAij,Fpn,ETA_update_type);
+    ETAij_history(counter,:,:) = ETAij;
     ETAijhalf = ETAij .* 0.5;
     
     %% --------------------------------------------------------------------
@@ -262,8 +264,10 @@ W = Wi;
 MU = MUi;
 VAR = 1./PRECi;
 
+ETAij_history = ETAij_history(1:eITER,:,:);
+
 % Create structure
 model = structure(W, MU, VAR, EZ, EZZt, eITER, eTIME, objArray, ...
-    LAMBDAi, GAMMAi, BETAi);
+    LAMBDAi, GAMMAi, BETAi, ETAij_history);
 
 end
