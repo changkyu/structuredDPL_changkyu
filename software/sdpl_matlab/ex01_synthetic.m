@@ -12,17 +12,17 @@ env_setting;
 
 %% Experiments Description
 models_desc = { 
-                struct('name','cppca', 'type','SVD',   'fn',@cppca   ,'skip',1), ...
-                struct('name','cppca', 'type','EM',    'fn',@cppca_em,'skip',1), ...
-                struct('name','dppca', 'type','',      'fn',@dppca   ,'skip',1), ...
-                struct('name','sdppca','type','bd75',  'fn',@sdppca  ,'skip',0), ...
+                struct('name','cppca', 'type','SVD',   'fn',@cppca   ,'skip',0), ...
+                struct('name','cppca', 'type','EM',    'fn',@cppca_em,'skip',0), ...
+                struct('name','dppca', 'type','',      'fn',@dppca   ,'skip',0), ...
                 struct('name','sdppca','type','bd50',  'fn',@sdppca  ,'skip',0), ...
-                struct('name','sdppca','type','unbd',  'fn',@sdppca  ,'skip',0), ...
+                %struct('name','sdppca','type','bd75',  'fn',@sdppca  ,'skip',0), ...
+                %struct('name','sdppca','type','unbd',  'fn',@sdppca  ,'skip',0), ...
               };
           
 n_models = numel(models_desc);
 idxes_model_cm = [1,2];
-idxes_model_dm = [3,4,5];
+idxes_model_dm = [3,4];
 
 format_dir_result   = 'result/synth_%s';
 format_mat_result_cppca = '%s_%s.mat';
@@ -107,7 +107,10 @@ disp('*** Distributed Setting ***');
 
 % V: Node assignment of samples
 %Varr = {1, 2, 5, 8, 10};
-Varr = {1, 2, 5, 8, 20, 50};
+%Varr = {1, 2, 5, 8, 20, 50};
+%Varr = {5, 10, 20, 40, 80};
+%Varr = {15, 30};
+Varr = {5, 10, 20};
 
 % ETA: Learning rate
 %ETAarr = {8, 10, 12, 16};
@@ -127,7 +130,8 @@ for idk = 1:length(Varr)
     % E: Network topology
     Earr = get_adj_graph(NV);
 
-    for idx = 1:length(Earr)
+    %for idx = 1:length(Earr)
+    for idx = 1
         E = Earr{idx};
 
         for idy = 1:length(ETAarr)
@@ -137,7 +141,7 @@ for idk = 1:length(Varr)
 
                 model_desc = models_desc{idx_model};
                 if( strcmp(model_desc.name,'sdppca') )
-                    if( idx ~= 2 )
+                    if( idx ~= 1 )
                         % SDPPCA starts with fully connected graph
                         continue;
                     end
@@ -174,7 +178,7 @@ for idk = 1:length(Varr)
                 if isequal(model_desc.fn, @dppca)
                     model = model_desc.fn(mm_trans, Vp, E, M, ETA, THRESHd, m_init_ddup, objfreq_dj);
                 elseif isequal(model_desc.fn, @sdppca)
-                    model = model_desc.fn(mm_trans, Vp, E, M, ETA, model_desc.type, THRESHd, m_init_ddup, objfreq_dj);
+                    model = model_desc.fn(mm_trans, Vp, E, M, ETA, model_desc.type, THRESHd, m_init_ddup, objfreq_dj, '');
                 else
                     error(['[Error] Undefined Function - ' model_desc.name]);
                 end

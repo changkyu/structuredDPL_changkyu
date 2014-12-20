@@ -28,11 +28,11 @@ max_val = -inf;
 max_iter = -inf;
 
 for idx=1:nargin
-    min_val = min([models{idx}.cm.objArray(1:models{idx}.cm.eITER,end); min_val]);
-    max_val = max([models{idx}.cm.objArray(1:models{idx}.cm.eITER,end); max_val]);
-    max_iter = max(models{idx}.cm.eITER, max_iter);
+    min_val = min([models{idx}.model.objArray(1:models{idx}.model.eITER,end); min_val]);
+    max_val = max([models{idx}.model.objArray(1:models{idx}.model.eITER,end); max_val]);
+    max_iter = max(models{idx}.model.eITER, max_iter);
 
-    plot(models{idx}.cm.objArray(1:models{idx}.cm.eITER,end), [linetype{idx} color{idx}],'LineWidth',2,'MarkerSize',7);
+    plot(models{idx}.model.objArray(1:models{idx}.model.eITER,end), [linetype{idx} color{idx}],'LineWidth',2,'MarkerSize',7);
 end
 
 set(h,'XScale','log');
@@ -44,7 +44,7 @@ set(h,'FontSize',fontsize);
 figure(2);
 h = axes;
 hold on;
-n_node = size(models{1}.cm.objArray,2)-1;
+n_node = size(models{end}.model.objArray,2)-1;
 
 min_val = inf;
 max_val = -inf;
@@ -53,11 +53,15 @@ max_iter = -inf;
 for idx=1:nargin
     for n=1:n_node
         
-        min_val = min([models{idx}.cm.objArray(1:models{idx}.cm.eITER,n); min_val]);
-        max_val = max([models{idx}.cm.objArray(1:models{idx}.cm.eITER,n); max_val]);
-        max_iter = max(models{idx}.cm.eITER, max_iter);
+        if( size(models{idx}.model.objArray,2) == 1 )
+            continue;
+        end
         
-        plot(models{idx}.cm.objArray(1:models{idx}.cm.eITER,n), [linetype{idx} color{mod(n,n_color)+1}],'LineWidth',2,'MarkerSize',7);
+        min_val = min([models{idx}.model.objArray(1:models{idx}.model.eITER,n); min_val]);
+        max_val = max([models{idx}.model.objArray(1:models{idx}.model.eITER,n); max_val]);
+        max_iter = max(models{idx}.model.eITER, max_iter);
+        
+        plot(models{idx}.model.objArray(1:models{idx}.model.eITER,n), [linetype{idx} color{mod(n,n_color)+1}],'LineWidth',2,'MarkerSize',7);
     end
 end
 hold off;

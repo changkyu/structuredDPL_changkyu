@@ -1,5 +1,5 @@
 function [W_new, MU_new, PREC_new, EZn, EZnZnt] = sdppca_local(...
-    Xi, M, idx, Bj, ETAi, Wi, MUi, PRECi, LAMBDAi, GAMMAi, BETAi)
+    Xi, M, idx, Bj, ETAi, Wi, MUi, PRECi, LAMBDAi, GAMMAi, BETAi, option)
 % DPPCA_LOCAL  Distributed Probablistic PCA (D-PPCA) Local Node
 % 
 % Description
@@ -84,6 +84,9 @@ end
 W_new = (W_new2 - W_new3 + W_new4) / W_new1 ;
 
 % Update MUi
+if( strcmp(option,'fix_mu') )
+    MU_new = MUi(:,idx);
+else
 % [ORG]
 %MU_new1 = Ni * PRECi(idx) + 2*ETA*cBj;
 % [NEW]
@@ -104,6 +107,7 @@ for jn = 1:cBj
     MU_new4 = MU_new4 + ETAi(Bj(jn))*(MUi(:,idx) + MUi(:,Bj(jn)));
 end
 MU_new = MU_new1^(-1) * (MU_new2 - MU_new3 + MU_new4);
+end
 
 % Solve for VARi^(-1)
 % [ORG]

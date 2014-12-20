@@ -1,4 +1,4 @@
-function [model] = sdppca(X, V, E, M, ETA, ETA_update_type, THRESH, model_init, iter_obj)
+function [model] = sdppca(X, V, E, M, ETA, ETA_update_type, THRESH, model_init, iter_obj, option)
 % SDPPCA        
 % Structured Distributed Probablistic PCA (SD-PPCA)
 % 
@@ -148,7 +148,7 @@ while counter <= COUNTER_MAX
         % Update (Eq. 7, 8, 9, 13)
         [Wnew, MUnew, PRECnew, EZn, EZnZnt] = ...
             sdppca_local(Xi{idx}, M, idx, Bj{idx}, ETAij(idx,:), ...
-                Wi_old, MUi_old, PRECi_old, LAMBDAi, GAMMAi, BETAi);
+                Wi_old, MUi_old, PRECi_old, LAMBDAi, GAMMAi, BETAi, option);
         
         % Assign updated parameters and latent statistics with new values
         Wi(:,:,idx) = Wnew(:,:);
