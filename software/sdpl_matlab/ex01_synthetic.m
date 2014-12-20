@@ -98,6 +98,7 @@ for idx_model=idxes_model_cm
     else
         error(['[Error] Undefined Function - ' model_desc.name]);
     end
+    model.W_GT = W;
     save_parfor_model(path_result, model);
     disp('saved the result... done');
 end
@@ -110,7 +111,7 @@ disp('*** Distributed Setting ***');
 %Varr = {1, 2, 5, 8, 20, 50};
 %Varr = {5, 10, 20, 40, 80};
 %Varr = {15, 30};
-Varr = {5, 10, 20};
+Varr = {40};
 
 % ETA: Learning rate
 %ETAarr = {8, 10, 12, 16};
@@ -183,6 +184,7 @@ for idk = 1:length(Varr)
                     error(['[Error] Undefined Function - ' model_desc.name]);
                 end
                 
+                model.W_GT = W;    
                 fprintf('Iter = %d:  Cost = %f\n', model.eITER, model.objArray(end,end));
                 save_parfor_model(path_result, model);
             end

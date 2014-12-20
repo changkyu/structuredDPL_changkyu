@@ -24,19 +24,16 @@ minFn  = min(Fpn);
 distFn = maxFn - minFn;
 
 zFpn = (Fpn - repmat(minFn,J,1)) ./ repmat(distFn,J,1) + 1;
-zFpn = zFpn * 10;
 
 for idx=1:J
-    if( distFn(idx) > 10 )
+    if( distFn(idx) > 0 )
         ratioFp = zFpn(idx,idx) ./ zFpn(:,idx);
         
         switch type_update
             case 'bd75'
                 ETA_new(idx,:) = ETA_old(idx,:) .* max(min(ratioFp,1.25),0.75)';
-            case 'bd50'
-                %ETA_new(idx,:) = ETA_old(idx,:) .* max(min(ratioFp,1.50),0.50)';
-                ratioFp(ratioFp < .25) = 0;
-                ETA_new(idx,:) = ETA_old(idx,:) .* min(ratioFp,1.50)';
+            case 'bd50'                
+                ETA_new(idx,:) = ETA_old(idx,:) .* max(min(ratioFp,1.50),0.50)';
             case 'unbd'
                 ETA_new(idx,:) = ETA_old(idx,:) .* ratioFp';
             otherwise
