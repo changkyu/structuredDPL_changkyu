@@ -29,7 +29,7 @@ format_mat_result_sdppca = '%s_n%03d_r%03d_r%03d_%s.mat';
 
 fontsize = 14;
 
-load('result/sfm_cube/result_cube_all_complete.mat');
+load('result/sfm_cube/result_cube_all.mat');
 
 size_SAs = size(SAs);
 SAs_sdppca = zeros(11, 20,1, length(idxes_model_dm));

@@ -22,7 +22,7 @@ format_mat_result_sdppca = '%s_N%02d_G%03d_E%02d_%s.mat';
 
 %%
 
-Varr = [5, 10, 20, 40 ];
+Varr = [5, 10, 20, 40];
 ETA = 10;
 
 figure();

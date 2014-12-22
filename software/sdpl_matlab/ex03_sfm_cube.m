@@ -22,7 +22,7 @@ models_desc = {
           
 n_models = numel(models_desc);
 idxes_model_cm = [1,2];
-idxes_model_dm = [4,5,6];
+idxes_model_dm = [4];
 
 format_dir_result   = 'result/sfm_cube_%s';
 format_mat_result_cppca = '%s_%s.mat';
@@ -35,7 +35,12 @@ model = 'cube';
 noises = [1e-5, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1];
 
 if ~exist(sprintf('../3rdparty/yoon12nips/data/%s', model), 'dir')
-    error('Please run cube data generation script first!');
+    reply = input('Do you want to generate data? Y/N [Y]:','s');
+    if strcmp(reply,'Y') || strcmp(reply,'y')
+        synthetic_cube_data_gen;
+    else
+        error('Please run cube data generation script first!');
+    end
 elseif ~exist(sprintf('result/sfm_%s', model), 'dir')
     mkdir(sprintf('result/sfm_%s', model));
 end
@@ -223,5 +228,3 @@ for idx_model = idxes_model_dm
     
     save(path_result, 'SAs');    
 end
-
-show_result_3_sfm_cube;

@@ -26,7 +26,7 @@ distFn = maxFn - minFn;
 zFpn = (Fpn - repmat(minFn,J,1)) ./ repmat(distFn,J,1) + 1;
 
 for idx=1:J
-    if( distFn(idx) > 0 )
+    if( distFn(idx) > 10 )
         ratioFp = zFpn(idx,idx) ./ zFpn(:,idx);
         
         switch type_update

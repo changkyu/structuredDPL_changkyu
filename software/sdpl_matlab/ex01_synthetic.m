@@ -1,10 +1,14 @@
-%--------------------------------------------------------------------------
 % Synthetic data demonstration
 %
-% Implemented/Modified
+% Implemented/Modified from [1]
 %  by     Changkyu Song (changkyu.song@cs.rutgers.edu)
 %  on     2014.11.07 (last modified on 2014/11/07)
 %--------------------------------------------------------------------------
+%
+% References
+%  [1] S. Yoon and V. Pavlovic. Distributed Probabilistic Learning
+%      for Camera Networks with Missing Data. In NIPS, 2012.
+%
 
 %% Reset/Clear
 clearvars;
@@ -44,7 +48,7 @@ RandStream.setGlobalStream(s);
 reset(s,0);
 
 % 50(D) dimensional, 100(N) samples searching, 5(M) dimensional subspace
-N = 100; D = 50; M = 5; VAR = 1;
+N = 400; D = 50; M = 5; VAR = 1;
 % Z (dim=M) comes from N(0,I)
 Z = randn(s,N,M);
 % W (dim=M) comes from N(0,I)
@@ -107,14 +111,9 @@ end
 disp('*** Distributed Setting ***');
 
 % V: Node assignment of samples
-%Varr = {1, 2, 5, 8, 10};
-%Varr = {1, 2, 5, 8, 20, 50};
-%Varr = {5, 10, 20, 40, 80};
-%Varr = {15, 30};
-Varr = {40};
+Varr = {5, 10, 20, 40};
 
 % ETA: Learning rate
-%ETAarr = {8, 10, 12, 16};
 ETAarr = {10};
 
 % Various number of nodes, network topology and ETA
@@ -191,6 +190,3 @@ for idk = 1:length(Varr)
         end
     end
 end
-
-% Show Result
-%show_result_1_synth_sdppca( savepath{:} );
