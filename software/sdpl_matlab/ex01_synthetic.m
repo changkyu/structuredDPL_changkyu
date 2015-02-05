@@ -1,40 +1,70 @@
+%--------------------------------------------------------------------------
 % Synthetic data demonstration
 %
 % Implemented/Modified from [1]
 %  by     Changkyu Song (changkyu.song@cs.rutgers.edu)
 %  on     2014.11.07 (last modified on 2014/11/07)
-%--------------------------------------------------------------------------
 %
 % References
 %  [1] S. Yoon and V. Pavlovic. Distributed Probabilistic Learning
 %      for Camera Networks with Missing Data. In NIPS, 2012.
 %
+%--------------------------------------------------------------------------
 
 %% Reset/Clear
 clearvars;
 env_setting;
 
 %% Experiments Description
+name_experiment = 'synth';
 models_desc = { 
-                struct('name','cppca', 'type','SVD',   'fn',@cppca   ,'skip',0), ...
-                struct('name','cppca', 'type','EM',    'fn',@cppca_em,'skip',0), ...
-                struct('name','dppca', 'type','',      'fn',@dppca   ,'skip',0), ...
-                struct('name','sdppca','type','bd50',  'fn',@sdppca  ,'skip',0), ...
-                %struct('name','sdppca','type','bd75',  'fn',@sdppca  ,'skip',0), ...
-                %struct('name','sdppca','type','unbd',  'fn',@sdppca  ,'skip',0), ...
+                struct( 'name',          'cppca',     ...
+                        'type',          'SVD',       ...
+                        'fn',            @cppca,      ...
+                        'format_result', 'cppca_SVD.mat', ...
+                        'skip',          0), ...
+                struct( 'name',          'cppca',     ...
+                        'type',          'EM',        ...
+                        'fn',            @cppca_em,   ...
+                        'format_result', 'cppca_EM.mat', ...
+                        'skip',          0), ...
+                struct( 'name',          'dppca',     ...
+                        'type',          '',          ...
+                        'fn',            @dppca,      ...
+                        'format_result', 'dppca_%s_%s_NV%d_ETA%d.mat', ...
+                        'skip',          0), ...
+                struct( 'name',          'adppca',    ...
+                        'type',          'bd50',      ...
+                        'fn',            @sdppca  ,   ...
+                        'format_result', 'adppca_%s_%s_NV%d_ETA%d.mat', ...
+                        'skip',          0), ...
               };
           
-n_models = numel(models_desc);
-idxes_model_cm = [1,2];
-idxes_model_dm = [3,4];
+idxes_model_cm  = [1,2];
+idxes_model_dm  = [3,4];
+idxes_model_all = [idxes_model_cm idxes_model_dm];
 
-format_dir_result   = 'result/synth_%s';
-format_mat_result_cppca = '%s_%s.mat';
-format_mat_result_dppca = '%s_N%02d_G%03d_E%02d.mat';
-format_mat_result_sdppca = '%s_N%02d_G%03d_E%02d_%s.mat';
+dir_result = './results';
+if ~exist(dir_result,'dir')
+    mkdir(dir_result);
+end
+
+dir_experiment = fullfile( dir_result, name_experiment );
+if ~exist(dir_experiment,'dir')
+    mkdir(dir_experiment);
+end
+
+for idx_model = idxes_model_all
+    model_desc = models_desc{idx_model};
+    dir_model = fullfile(dir_experiment, model_desc.name);
+    if ~exist(dir_model,'dir')
+        mkdir(dir_model);
+    end
+end
+
+disp(['============ Experiment: ' name_experiment '============']);   
 
 %% Initial Setting
-
 % Frequency for intermediate object function value output
 objfreq_c = 100;
 objfreq_d1 = 100;
@@ -48,7 +78,7 @@ RandStream.setGlobalStream(s);
 reset(s,0);
 
 % 50(D) dimensional, 100(N) samples searching, 5(M) dimensional subspace
-N = 400; D = 50; M = 5; VAR = 1;
+N = 100; D = 50; M = 5; VAR = 1;
 % Z (dim=M) comes from N(0,I)
 Z = randn(s,N,M);
 % W (dim=M) comes from N(0,I)
@@ -68,125 +98,101 @@ mm_trans = measurement_matrix;
 % initializes with a random projection, zero mean and a small variance
 m_init_cppca = get_init_value_ex('cppca', mm_trans, M, 1);
 
+%% Initial Setting for DPPCA and ADPPCA
+% NV: the number of vertices (nodes) in the network
+NVarr = [5, 10, 20, 40];
+
+% ETA: Learning rate
+ETAarr = [10];
 
 %% Experiments - Centralized
-disp('*** Centralized Setting ***');
 
 for idx_model=idxes_model_cm
 
     model_desc = models_desc{idx_model};
-    disp(['PPCA ('  model_desc.type ')']);
-
-    % result directory
-    dir_result = sprintf(format_dir_result,model_desc.name);
-    if ~exist(dir_result,'dir')
-        mkdir(dir_result);
-    end
-    
-    % result mat file
-    mat_result = sprintf(format_mat_result_cppca, model_desc.name, model_desc.type);
-    path_result = [dir_result '/' mat_result];
-    
-    % skip if it already exist
+    fprintf(['\nModel: ' model_desc.name ' ' model_desc.type '\n']);
+   
+    % result mat file (skip if it already exist)
+    mat_result = model_desc.format_result;
+    path_result = fullfile(dir_experiment, model_desc.name, mat_result);
     if( model_desc.skip )
         if( exist( path_result, 'file' ) )        
-            disp('already exist... skip');
+            fprintf('[Skip] already exist...\n');
             continue;
         end
     end    
     
     if isequal(model_desc.fn, @cppca)
-        model = cppca(mm_trans, M);            
+        model = model_desc.fn(mm_trans, M);            
     elseif isequal(model_desc.fn, @cppca_em)        
-        model = cppca_em(mm_trans, M, THRESHc, m_init_cppca, objfreq_c);
+        model = model_desc.fn(mm_trans, M, THRESHc, m_init_cppca, objfreq_c);
     else
         error(['[Error] Undefined Function - ' model_desc.name]);
     end
     model.W_GT = W;
     save_parfor_model(path_result, model);
-    disp('saved the result... done');
+    fprintf('[Done] saved the result.\n');
 end
 
 %% Experiments - Distributed
-disp('*** Distributed Setting ***');
 
-% V: Node assignment of samples
-Varr = {5, 10, 20, 40};
+for idx_model = idxes_model_dm
 
-% ETA: Learning rate
-ETAarr = {10};
+    model_desc = models_desc{idx_model};
+    fprintf(['\nModel: ' model_desc.name ' ' model_desc.type '\n']);
 
-% Various number of nodes, network topology and ETA
-% NOTE: We used parallel computation toolbox of MATLAB here but one can
-%  simply change [parfor] with [for] to run the code without the toolbox.
-%parfor idk = 1:length(Varr)
-for idk = 1:length(Varr)
-    % Node assignment to each sample
-    NV = Varr{idk};
-    Vp = get_sample_assign(NV, N, 0);
-    
-    m_init_ddup = get_init_value_ex('d_dup', mm_trans, M, 10, NV, m_init_cppca);
-    
-    % E: Network topology
-    Earr = get_adj_graph(NV);
+    % Various number of nodes, network topology and ETA
+    % NOTE: We used parallel computation toolbox of MATLAB here but one can
+    %  simply change [parfor] with [for] to run the code without the toolbox.
+    %parfor idk = 1:length(Varr)
+    for idx_NV = 1:length(NVarr)
+        % Node assignment to each sample
+        NV = NVarr(idx_NV);
+        fprintf(['# of nodes: ' num2str(NV) '\n']);
+        
+        Vp = get_sample_assign(NV, N, 0);
 
-    %for idx = 1:length(Earr)
-    for idx = 1
-        E = Earr{idx};
+        m_init_ddup = get_init_value_ex('d_dup', mm_trans, M, 10, NV, m_init_cppca);
 
-        for idy = 1:length(ETAarr)
-            ETA = ETAarr{idy};
-            
-            for idx_model = idxes_model_dm
+        % Network topology
+        Networks = get_adj_graph(NV);
 
-                model_desc = models_desc{idx_model};
-                if( strcmp(model_desc.name,'sdppca') )
-                    if( idx ~= 1 )
-                        % SDPPCA starts with fully connected graph
-                        continue;
-                    end
-                end
-                
-                disp(['PPCA ('  model_desc.name ' ' model_desc.type ')']);
+        %for idx = 1:length(Networks)
+        for idx_Network = 1
+            fprintf(['Network: ' Networks{idx_Network}.name '\n']);
 
-                % result directory
-                dir_result = sprintf(format_dir_result,model_desc.name);
-                if ~exist(dir_result,'dir')
-                    mkdir(dir_result);
-                end
+            for idx_ETA = 1:length(ETAarr)
+                ETA = ETAarr(idx_ETA);
+                fprintf(['ETA: ' num2str(ETA) '\n']);
 
                 % result mat file
-                if strcmp(model_desc.name,'sdppca')
-                    mat_result = sprintf(format_mat_result_sdppca, model_desc.name, NV, idx, ETA, model_desc.type);
-                else
-                    mat_result = sprintf(format_mat_result_dppca, model_desc.name, NV, idx, ETA);
-                end
-                path_result = [dir_result '/' mat_result];
-    
+                mat_result = sprintf(model_desc.format_result, model_desc.name, model_desc.type, Networks{idx_Network}.name, NV, ETA);
+                path_result = fullfile(dir_experiment, model_desc.name, mat_result);
+
                 if( model_desc.skip )
                     if( exist( path_result, 'file' ) )
                         model = load(path_result);
                         model = model.model;
-                        
-                        disp('already exist... skip');
-                        fprintf('Iter = %d:  Cost = %f\n', model.eITER, model.objArray(end,end));
-                
+
+                        disp('[Skip] already exist...');
+                        fprintf('Iter = %d\n', model.eITER);
+
                         continue;
                     end
                 end
-                    
+
                 if isequal(model_desc.fn, @dppca)
-                    model = model_desc.fn(mm_trans, Vp, E, M, ETA, THRESHd, m_init_ddup, objfreq_dj);
+                    model = model_desc.fn(mm_trans, Vp, Networks{idx_Network}.adj, M, ETA, THRESHd, m_init_ddup, objfreq_dj);
                 elseif isequal(model_desc.fn, @sdppca)
-                    model = model_desc.fn(mm_trans, Vp, E, M, ETA, model_desc.type, THRESHd, m_init_ddup, objfreq_dj, '');
+                    model = model_desc.fn(mm_trans, Vp, Networks{idx_Network}.adj, M, ETA, model_desc.type, THRESHd, m_init_ddup, objfreq_dj, '');
                 else
                     error(['[Error] Undefined Function - ' model_desc.name]);
                 end
-                
+
                 model.W_GT = W;    
-                fprintf('Iter = %d:  Cost = %f\n', model.eITER, model.objArray(end,end));
+                fprintf('Iter = %d\n', model.eITER);
                 save_parfor_model(path_result, model);
-            end
+            end                
         end
     end
 end
