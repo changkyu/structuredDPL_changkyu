@@ -100,10 +100,14 @@ m_init_cppca = get_init_value_ex('cppca', mm_trans, M, 1);
 
 %% Initial Setting for DPPCA and ADPPCA
 % NV: the number of vertices (nodes) in the network
-NVarr = [5, 10, 20, 40];
+NVarr = [6, 10, 20, 40];
 
 % ETA: Learning rate
 ETAarr = [10];
+
+save( fullfile(dir_experiment, [name_experiment '_description.mat']), ...
+      'name_experiment', 'models_desc', 'idxes_model_cm', 'idxes_model_dm', ...
+      'NVarr', 'ETAarr');
 
 %% Experiments - Centralized
 

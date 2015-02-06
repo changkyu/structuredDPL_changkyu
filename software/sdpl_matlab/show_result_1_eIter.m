@@ -1,71 +1,73 @@
+%% Experiments Description
+clearvars;
+
+name_experiment = 'synth';
+dir_result = './results';
+dir_experiment = fullfile( dir_result, name_experiment );
+path_desc = fullfile(dir_experiment, [name_experiment '_description.mat']);
+
+load( path_desc );
+
 linetype = {'-', '--', ':', '-.'};
 color = {'r', 'm', 'g', 'c', 'b', 'k' };
 
-%% Experiments Description
-models_desc = { 
-                %struct('name','cppca', 'type','SVD',   'fn',@cppca   ,'skip',0), ...
-                %struct('name','cppca', 'type','EM',    'fn',@cppca_em,'skip',0), ...
-                struct('name','dppca', 'type','',      'fn',@dppca   ,'skip',0), ...
-                %struct('name','sdppca','type','bd75',  'fn',@sdppca  ,'skip',0), ...
-                struct('name','sdppca','type','bd50',  'fn',@sdppca  ,'skip',0), ...
-                %struct('name','sdppca','type','unbd',  'fn',@sdppca  ,'skip',0), ...
-              };
-          
-n_models = numel(models_desc);
-%idxes_model_cm = [1,2];
-idxes_model_dm = [1,2];
+%% Read Result Files
 
-format_dir_result   = 'result/synth_%s';
-format_mat_result_cppca = '%s_%s.mat';
-format_mat_result_dppca = '%s_N%02d_G%03d_E%02d.mat';
-format_mat_result_sdppca = '%s_N%02d_G%03d_E%02d_%s.mat';
-
-%%
-
-Varr = [5, 10, 20, 40];
-ETA = 10;
-
-figure();
-hold on;
-
-iters = zeros(length(Varr),length(idxes_model_dm));
+n_networks = 5;
+iters = zeros(length(NVarr),n_networks,length(idxes_model_dm));
 
 for idx_model = idxes_model_dm
-    idx_m = idx_model-idxes_model_dm(1)+1;
+    
     model_desc = models_desc{idx_model};    
     % result directory
     dir_result = sprintf(format_dir_result,model_desc.name);
     
-    
-    for idk = 1:length(Varr)
-    
-        NV = Varr(idk);
+    for idx_NV = 1:length(NVarr)
+        NV = NVarr(idx_NV);
+        
+        % Network topology
+        Networks = get_adj_graph(NV);
+            
+        for idx_Network=1:n_networks
+            for idx_ETA = 1:length(ETAarr)                
+                ETA = ETAarr(idx_ETA);
+                
+                % result mat file
+                mat_result = sprintf(model_desc.format_result, Networks{idx_Network}.name, NV, ETA);
+                path_result = fullfile(dir_experiment, model_desc.name, mat_result);
 
-        for idx = 1
-            % result mat file
-            if strcmp(model_desc.name,'sdppca')
-                mat_result = sprintf(format_mat_result_sdppca, model_desc.name, NV, idx, ETA, model_desc.type);
-            else
-                mat_result = sprintf(format_mat_result_dppca, model_desc.name, NV, idx, ETA);
+                res = load(path_result);
+                iters(idx_NV,idx_Network,idx_m) = res.model.eITER;
             end
-            path_result = [dir_result '/' mat_result];
-
-            res = load(path_result);
-            iters(idk,idx_m) = res.model.eITER;
         end
         
     end
-        
-    %plot(Varr, iters, [color{idx_m} linetype{idx_m}]);    
-    %hist(iters, Varr);    
-    %bar(Varr, iters);
-    bar(iters);
 end
-hold off;
 
-set(gca, 'XTickLabel',{'5','10','20','40'}, 'XTick',1:4)
+%% Show Result (# of Nodes vs. iters)
+close all;
 
-xlabel('Number of Nodes');
-ylabel('Number of Iteration');
-legend({'DPPCA','SDPPCA (Ours)'});
-title('Number of Nodes vs. Iterations');
+str_xlabel = cell(length(NVarr),1);
+for idx_NV=1:length(NVarr)
+    str_xlabel{idx_NV} = num2str(NVarr(idx_NV));
+end
+
+for idx_Network=1:n_networks
+
+    figure();
+    hold on;
+    hold off;
+    
+    iter = sqeeze(iters(:,idx_Network,:));
+    bar(iter);
+
+    set(gca, 'XTickLabel',str_xlabel, 'XTick',1:length(NVarr))
+
+    xlabel('Number of Nodes');
+    ylabel('Number of Iteration');
+    legend({'DPPCA','Ours'});
+    title('Number of Nodes vs. Iterations');
+
+end
+
+%% Show Result
