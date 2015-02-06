@@ -13,15 +13,12 @@ color = {'r', 'm', 'g', 'c', 'b', 'k' };
 
 %% Read Result Files
 
-n_networks = 5;
-iters = zeros(length(NVarr),n_networks,length(idxes_model_dm));
+n_networks = 1;
+iters = zeros(length(NVarr),n_networks,length(ETAarr),max(idxes_model_dm));
 
 for idx_model = idxes_model_dm
     
     model_desc = models_desc{idx_model};    
-    % result directory
-    dir_result = sprintf(format_dir_result,model_desc.name);
-    
     for idx_NV = 1:length(NVarr)
         NV = NVarr(idx_NV);
         
@@ -29,7 +26,7 @@ for idx_model = idxes_model_dm
         Networks = get_adj_graph(NV);
             
         for idx_Network=1:n_networks
-            for idx_ETA = 1:length(ETAarr)                
+            for idx_ETA = 1:length(ETAarr)
                 ETA = ETAarr(idx_ETA);
                 
                 % result mat file
@@ -37,7 +34,7 @@ for idx_model = idxes_model_dm
                 path_result = fullfile(dir_experiment, model_desc.name, mat_result);
 
                 res = load(path_result);
-                iters(idx_NV,idx_Network,idx_m) = res.model.eITER;
+                iters(idx_NV,idx_Network,idx_ETA,idx_model) = res.model.eITER;
             end
         end
         
@@ -53,21 +50,23 @@ for idx_NV=1:length(NVarr)
 end
 
 for idx_Network=1:n_networks
+    for idx_ETA = 1:length(ETAarr)
 
-    figure();
-    hold on;
-    hold off;
-    
-    iter = sqeeze(iters(:,idx_Network,:));
-    bar(iter);
+        figure();
+        hold on;
 
-    set(gca, 'XTickLabel',str_xlabel, 'XTick',1:length(NVarr))
+        iter = squeeze(iters(:,idx_Network,idx_ETA,idxes_model_dm));
+        bar(iter);
 
-    xlabel('Number of Nodes');
-    ylabel('Number of Iteration');
-    legend({'DPPCA','Ours'});
-    title('Number of Nodes vs. Iterations');
+        set(gca, 'XTickLabel',str_xlabel, 'XTick',1:length(NVarr))
 
+        xlabel('Number of Nodes');
+        ylabel('Number of Iteration');
+        legend({'DPPCA','Ours'});
+        title('Number of Nodes vs. Iterations');
+
+        hold off;    
+    end
 end
 
 %% Show Result

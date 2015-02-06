@@ -161,8 +161,8 @@ for idx_model = idxes_model_dm
         % Network topology
         Networks = get_adj_graph(NV);
 
-        %for idx = 1:length(Networks)
-        for idx_Network = 1
+        for idx = 1:length(Networks)
+        %for idx_Network = 1
             fprintf(['Network: ' Networks{idx_Network}.name '\n']);
 
             for idx_ETA = 1:length(ETAarr)
