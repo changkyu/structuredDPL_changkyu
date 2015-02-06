@@ -100,7 +100,7 @@ m_init_cppca = get_init_value_ex('cppca', mm_trans, M, 1);
 
 %% Initial Setting for DPPCA and ADPPCA
 % NV: the number of vertices (nodes) in the network
-NVarr = [6, 10, 20, 40];
+NVarr = [8, 16, 32, 64];
 
 % ETA: Learning rate
 ETAarr = [10];
@@ -161,7 +161,7 @@ for idx_model = idxes_model_dm
         % Network topology
         Networks = get_adj_graph(NV);
 
-        for idx = 1:length(Networks)
+        for idx_Network = 1:length(Networks)
         %for idx_Network = 1
             fprintf(['Network: ' Networks{idx_Network}.name '\n']);
 
