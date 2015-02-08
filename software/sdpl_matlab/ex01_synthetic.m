@@ -77,8 +77,8 @@ s = RandStream('mt19937ar','Seed',1);
 RandStream.setGlobalStream(s);
 reset(s,0);
 
-% 50(D) dimensional, 100(N) samples searching, 5(M) dimensional subspace
-N = 100; D = 50; M = 5; VAR = 1;
+% 50(D) dimensional, 1000(N) samples searching, 5(M) dimensional subspace
+N = 1000; D = 50; M = 5; VAR = 1;
 % Z (dim=M) comes from N(0,I)
 Z = randn(s,N,M);
 % W (dim=M) comes from N(0,I)
@@ -100,7 +100,7 @@ m_init_cppca = get_init_value_ex('cppca', mm_trans, M, 1);
 
 %% Initial Setting for DPPCA and ADPPCA
 % NV: the number of vertices (nodes) in the network
-NVarr = [8, 16, 32, 64];
+NVarr = [8, 16, 24, 32];
 
 % ETA: Learning rate
 ETAarr = [10];
