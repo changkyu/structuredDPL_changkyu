@@ -16,6 +16,8 @@ color = {'r', 'm', 'g', 'c', 'b', 'k' };
 n_networks = 1;
 iters = zeros(length(NVarr),n_networks,length(ETAarr),max(idxes_model_dm));
 
+idxes_model_dm = [5,6];
+
 for idx_model = idxes_model_dm
     
     model_desc = models_desc{idx_model};    
@@ -29,6 +31,7 @@ for idx_model = idxes_model_dm
             for idx_ETA = 1:length(ETAarr)
                 ETA = ETAarr(idx_ETA);
                 
+                ETA = 0;
                 % result mat file
                 mat_result = sprintf(model_desc.format_result, Networks{idx_Network}.name, NV, ETA);
                 path_result = fullfile(dir_experiment, model_desc.name, mat_result);
