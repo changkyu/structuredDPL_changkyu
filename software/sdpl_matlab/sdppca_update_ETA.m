@@ -36,6 +36,9 @@ for idx=1:J
                 ETA_new(idx,:) = ETA_old(idx,:) .* max(min(ratioFp,1.50),0.50)';
             case 'unbd'
                 ETA_new(idx,:) = ETA_old(idx,:) .* ratioFp';
+            case 'ETA0'
+            case 'bd00'
+                ETA_new(idx,:) = 0;
             otherwise
                 error('[Error] Undefined update type');
         end    
@@ -43,6 +46,7 @@ for idx=1:J
         ETA_new(idx,:) = ETA_old(idx,:);
     end
 end
+
 
 end
 
